@@ -1,0 +1,23 @@
+export default {
+    "Afirme": "/Banks/Afirme_logo.svg",
+    "Banco Azteca": "/Banks/banco-azteca.png",
+    "Banco del Bajío": "/Banks/banbajio_0.webp",
+    "BanCoppel": "/Banks/bancoppel.svg",
+    "Banorte": "/Banks/banorte.png",
+    "Banregio": "/Banks/banregio.png",
+    "Banca Mifel": "/Banks/banca_mifel.png",
+    "Bansi": "/Banks/bansi.svg",
+    "BBVA": "/Banks/bbva.png",
+    "CI Banco": "/Banks/ci_banco.svg",
+    "Citibanamex": "/Banks/citibanamex.png",
+    "Compartamos Banco": "/Banks/compartamos_banco.png",
+    "Hey Banco": "/Banks/hey_banco.svg",
+    "HSBC": "/Banks/hsbc.png",
+    "Inbursa": "/Banks/inbursa.png",
+    "Klar": "/Banks/klar.png",
+    "Multiva": "/Banks/multiva.svg",
+    "Nu México": "/Banks/nu_mexico.svg",
+    "Santander": "/Banks/santander.webp",
+    "Scotiabank": "/Banks/scotiabank.png",
+  };
+  

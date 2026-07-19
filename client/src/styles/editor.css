@@ -1,0 +1,123 @@
+.ql-toolbar {
+    border: 1px solid hsl(var(--border)) !important;
+    margin-bottom: 1.5rem !important;
+    padding: 1rem !important;
+    border-radius: var(--radius) !important;
+    background-color: hsl(var(--background)) !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center;
+    gap: 8px !important;
+}
+.ql-active .ql-stroke {
+    stroke: var(--primary) !important;
+}
+.ql-active .ql-fill {
+    fill: var(--primary) !important;
+}
+.ql-container {
+    border: none !important;
+}
+.editor_rifaez .ql-editor {
+    border: 1.5px dashed hsl(var(--border-editor)) !important;
+}
+.ql-editor:focus-visible {
+    border-color: var(--primary) !important;
+}
+.ql-stroke {
+    stroke: hsl(var(--foreground)) !important;
+    stroke-width: 1.2px !important;
+}
+.ql-fill {
+    fill: hsl(var(--foreground)) !important;
+}
+.ql-toolbar button svg {
+    min-width: 16px !important;
+    max-width: 16px !important;
+    max-height: 16px !important;
+    min-height: 16px !important;
+}
+.ql-formats {
+    display: flex !important;
+    justify-items: center !important;
+    gap: 3px;
+}
+.ql-picker-label {
+    color: hsl(var(--foreground)) !important;
+}
+.ql-expanded .ql-picker-label {
+    border: 1px solid hsl(var(--border)) !important;
+
+}
+.ql-picker-options {
+    background-color: hsl(var(--background)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+}
+.ql-picker-item {
+    color: hsl(var(--foreground)) !important;
+}
+.ql-toolbar button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    font-size: 0.875rem !important; /* text-sm */
+    font-weight: 500 !important;    /* font-medium */
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke !important;
+    transition-duration: 150ms !important;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color: hsl(var(--background)) !important;
+    height: 2.25rem !important;     /* h-9 */
+    border-radius: 0.375rem !important; /* rounded-md */
+    padding-left: 0.75rem !important;  /* px-3 */
+    padding-right: 0.75rem !important;
+    color: hsl(var(--foreground)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+  }
+  
+  .ql-toolbar button:hover {
+    background-color: hsl(var(--muted)) !important;
+  }
+  .ql-font-arial,
+  .ql-font span[data-value="arial"]::before {
+    font-family: Arial, sans-serif;
+  }
+  .ql-font-comic-sans,
+  .ql-font span[data-value="comic-sans"]::before {
+    font-family: "Comic Sans MS", cursive, sans-serif;
+  }
+  .ql-font-courier-new,
+  .ql-font span[data-value="courier-new"]::before {
+    font-family: "Courier New";
+  }
+  .ql-font-georgia,
+  .ql-font span[data-value="georgia"]::before {
+    font-family: Georgia, serif;
+  }
+  .ql-font-helvetica,
+  .ql-font span[data-value="helvetica"]::before {
+    font-family: Helvetica, sans-serif;
+  }
+  .ql-font-lucida,
+  .ql-font span[data-value="lucida"]::before {
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  }
+  
+
+  .ql-toolbar button:hover .ql-stroke {
+    stroke: hsl(var(--muted-foreground)) !important;
+  }
+  .ql-toolbar button:hover .ql-fill {
+    fill: hsl(var(--muted-foreground)) !important;
+  }
+  
+  .ql-toolbar button:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 2px hsl(var(--ring)), 0 0 0 4px var(--ring-offset-background) !important;
+  }
+  
+  .ql-toolbar button:disabled {
+    pointer-events: none !important;
+    opacity: 0.5 !important;
+  }
+  

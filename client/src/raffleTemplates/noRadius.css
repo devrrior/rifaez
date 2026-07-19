@@ -1,0 +1,43 @@
+.no-radius * {
+    border-radius: 0 !important;
+  }
+
+  .no-radius .round-must {
+    border-radius: 1000px !important;
+  }
+
+  @keyframes slideInFromLeft {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(200%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes slideOutLeft {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(200%);
+    }
+  }
+
+  @keyframes slideOutRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }

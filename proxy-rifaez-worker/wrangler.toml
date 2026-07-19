@@ -1,0 +1,10 @@
+name = "proxy-rifaez"
+type = "javascript"
+
+account_id = "e5f7d1ba0fd52d5929a1676fa3715da4"
+zone_id = "bf7cf8a974e628dd5389769df3af9cee"
+workers_dev = false
+routes = ["proxy.rifaez.com/*"]
+
+# You can leave routes empty for now or test with workers.dev first
+# routes = ["proxy.rifaez.com/*"]
