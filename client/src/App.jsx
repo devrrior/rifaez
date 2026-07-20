@@ -172,19 +172,27 @@ const AppContent = () => {
 
   useEffect(() => {
     const index = user?.raffles?.findIndex(obj => obj.id === selectedRaffle?.id);
-    localStorage.setItem("selectedRaffleIndex", `${index}`);
+    // Solo guardar índices válidos. findIndex devuelve -1 (o undefined si no hay rifas)
+    // cuando selectedRaffle no coincide con ninguna rifa; guardar eso rompería la próxima
+    // carga (raffles["-1"] === undefined -> pantalla en blanco).
+    if (typeof index === "number" && index >= 0) {
+      localStorage.setItem("selectedRaffleIndex", `${index}`);
+    }
   }, [selectedRaffle])
 
   useEffect(() => {
     if (user) {
       const raffles = user?.raffles?.length > 0 ? user?.raffles : ["null"];
-      const selectedRaffleIndex = localStorage.getItem("selectedRaffleIndex");
-      if(selectedRaffleIndex){
-        setSelectedRaffle(raffles[selectedRaffleIndex]);
-      } else {
-        localStorage.setItem("selectedRaffleIndex", "0");
-        setSelectedRaffle(raffles[0]);
-      }
+      // Validar el índice guardado: si es NaN, negativo o fuera de rango (p. ej. "-1",
+      // "undefined", o un índice viejo de cuando había más rifas), usar 0. Esto evita que
+      // selectedRaffle quede en undefined y deje el dashboard en blanco.
+      const storedIndex = parseInt(localStorage.getItem("selectedRaffleIndex"), 10);
+      const validIndex =
+        Number.isInteger(storedIndex) && storedIndex >= 0 && storedIndex < raffles.length
+          ? storedIndex
+          : 0;
+      localStorage.setItem("selectedRaffleIndex", `${validIndex}`);
+      setSelectedRaffle(raffles[validIndex]);
     }
   }, [user]);
 
@@ -218,7 +226,17 @@ const AppContent = () => {
 
   }
 
-  
+  // user existe pero selectedRaffle todavía no se resolvió (justo tras iniciar sesión, o
+  // mientras el efecto [user] lo calcula). Mostrar el spinner en vez de retornar undefined,
+  // que dejaría la pantalla en blanco.
+  if (user && !selectedRaffle) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center">
+        <SpinningLogo className="h-40 w-40" />
+      </div>
+    );
+  }
+
   if(selectedRaffle && user){
     return (
       <>
