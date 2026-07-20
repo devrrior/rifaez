@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { joiResolver } from '@hookform/resolvers/joi';
+import { useNavigate } from 'react-router-dom';
 import bankLogos from '../seed/bankLogo';
 
 const methods = {
@@ -26,6 +27,9 @@ const methods = {
 
 const PaymentMethod = ({ setCurrentStep, mainPublishRaffle, formData, setFormData}) => {
   const { user } = useAuth()
+  const navigate = useNavigate()
+  // El usuario necesita un plan activo (basic/pro/business) para poder publicar una rifa.
+  const hasActivePlan = Boolean(methods[user.currentPlan])
   const {register, handleSubmit, control, setValue, watch, formState: { errors }} = useForm({
     resolver: joiResolver(methodSchema)
   })
@@ -89,6 +93,10 @@ const PaymentMethod = ({ setCurrentStep, mainPublishRaffle, formData, setFormDat
   }
 
   const publishRaffle = () => {
+    // Sin un plan activo no se puede publicar: se avisa al usuario en vez de fallar en silencio.
+    if(!hasActivePlan){
+        return
+    }
     const enabledMethods = paymentMethods.filter(method => method.enabled)
     if(enabledMethods.length > 0 && enabledMethods.length <= (methods[user.currentPlan])){
         mainPublishRaffle()
@@ -321,6 +329,20 @@ const PaymentMethod = ({ setCurrentStep, mainPublishRaffle, formData, setFormDat
             <h2 className="text-2xl font-bold text-foreground">Método de Pagos</h2>
             <p className={`${methodError ? "text-red-500" : "text-muted-foreground"}`}>Deberas elegir un metodo de pago. Maximo ({methods[user.currentPlan] || 3})</p>
           </header>
+
+          {!hasActivePlan && (
+            <div className="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-center space-y-3">
+              <p className="text-amber-600 dark:text-amber-400 font-medium">
+                Necesitas un plan activo para publicar tu rifa.
+              </p>
+              <Button
+                onClick={() => navigate("/pricing-plan")}
+                className="bg-primary hover:bg-[#3573d9] text-primary-foreground"
+              >
+                Ver planes
+              </Button>
+            </div>
+          )}
           <div className="space-y-6">
             {paymentMethods.map((method, index) => (
               <motion.div
@@ -395,7 +417,8 @@ const PaymentMethod = ({ setCurrentStep, mainPublishRaffle, formData, setFormDat
             
             <Button
               onClick={publishRaffle}
-              className="bg-primary hover:bg-[#3573d9] text-primary-foreground px-8"
+              disabled={!hasActivePlan}
+              className="bg-primary hover:bg-[#3573d9] text-primary-foreground px-8 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Publicar Rifa
             </Button>
