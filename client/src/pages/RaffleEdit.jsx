@@ -851,10 +851,6 @@ const RaffleEditPage = ({}) => {
                     <div className="py-1.5 px-4 hover:bg-card cursor-pointer font-[Lato]"onClick={()=>{selectFont("Lato")}}>Lato</div>
                     <div className="py-1.5 px-4 hover:bg-card cursor-pointer font-['IBM_Plex_Sans']" onClick={()=>{selectFont("IBM Plex Sans")}}>IBM Plex Sans</div>
                     <div className="py-1.5 px-4 hover:bg-card cursor-pointer font-['Concert_One']" onClick={()=>{selectFont("Concert One")}}>Concert One</div>
-                    <div className="py-1.5 px-4 hover:bg-card cursor-pointer font-['Bowlby_One']" onClick={()=>{selectFont("Bowlby One")}}>Bowlby One</div>
-                    <div className="py-1.5 px-4 hover:bg-card cursor-pointer font-['Lilita_One']" onClick={()=>{selectFont("Lilita One")}}>Lilita One</div>
-                    <div className="py-1.5 px-4 hover:bg-card cursor-pointer font-[Bungee]" onClick={()=>{selectFont("Bungee")}}>Bungee</div>
-                    <div className="py-1.5 px-4 hover:bg-card cursor-pointer font-['Luckiest_Guy']" onClick={()=>{selectFont("Luckiest Guy")}}>Luckiest Guy</div>
                   </div>
               }
                 </div>

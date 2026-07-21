@@ -291,10 +291,6 @@ const PageDesign = ({ setValue, errors, control }) => {
                         <SelectItem value="Lato" className="font-[Lato]">Lato</SelectItem>
                         <SelectItem value="IBM Plex Sans" className="font-[IBM_Plex_Sans]">IBM Plex Sans</SelectItem>
                         <SelectItem value="Concert One" className="font-[Concert_One]">Concert One</SelectItem>
-                        <SelectItem value="Bowlby One" className="font-[Bowlby_One]">Bowlby One</SelectItem>
-                        <SelectItem value="Lilita One" className="font-[Lilita_One]">Lilita One</SelectItem>
-                        <SelectItem value="Bungee" className="font-[Bungee]">Bungee</SelectItem>
-                        <SelectItem value="Luckiest Guy" className="font-[Luckiest_Guy]">Luckiest Guy</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
