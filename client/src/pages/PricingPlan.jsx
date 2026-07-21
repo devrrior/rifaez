@@ -59,7 +59,6 @@ function PricingPlan(){
         price: "$125",
         features: [
           "1 Rifas Activas",
-          "1 Plantilla Disponibleo",
           "2 Trabajadores",
           "Dominio personalizado",
         ]
@@ -71,7 +70,6 @@ function PricingPlan(){
         price: "$250",
         features: [
           "3 Rifas Activas",
-          "2 Plantilla Disponible",
           "5 Trabajadores",
           "Dominio personalizado",
         ]
@@ -83,7 +81,6 @@ function PricingPlan(){
         price: "$500",
         features: [
           "Rifas Ilimitadas",
-          "3 Plantilla Disponible",
           "10 Trabajadores",
           "Dominio personalizado",
         ]

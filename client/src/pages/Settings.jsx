@@ -559,7 +559,6 @@ const removeMethod = async (methodInp) => {
       price: "$125",
       features: [
         "1 Rifa Activa",
-        "1 Plantilla Disponible",
         "2 Trabajadores",
         "Dominio personalizado",
       ]
@@ -571,7 +570,6 @@ const removeMethod = async (methodInp) => {
       price: "$250",
       features: [
         "3 Rifas Activas",
-        "2 Plantilla Disponible",
         "5 Trabajadores",
         "Dominio personalizado",
       ]
@@ -583,7 +581,6 @@ const removeMethod = async (methodInp) => {
       price: "$500",
       features: [
         "Rifas Ilimitadas",
-        "3 Plantilla Disponible",
         "10 Trabajadores",
         "Dominio personalizado",
       ]

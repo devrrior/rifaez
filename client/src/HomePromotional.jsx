@@ -83,7 +83,6 @@ export default function HomePromotional(){
           priceSuffix: '/ mes',
           features: [
             { text: '1 rifa activa', icon: <Award className="h-5 w-5 text-blue-500" /> },
-            { text: '1 Plantilla de diseño', icon: <Palette className="h-5 w-5 text-blue-500" /> },
             { text: 'Hasta 2 trabajadores', icon: <Users className="h-5 w-5 text-blue-500" /> },
             { text: 'Servidor normal', icon: <Zap className="h-5 w-5 text-blue-500" /> },
             { text: '3 métodos de pago', icon: <CheckCircle className="h-5 w-5 text-blue-500" /> },
@@ -102,7 +101,6 @@ export default function HomePromotional(){
           priceSuffix: '/ mes',
           features: [
             { text: 'Hasta 5 rifas activas', icon: <Award className="h-5 w-5 text-blue-600" /> },
-            { text: '2 Plantillas de diseño', icon: <Palette className="h-5 w-5 text-blue-600" /> },
             { text: 'Hasta 5 trabajadores', icon: <Users className="h-5 w-5 text-blue-600" /> },
             { text: 'Servidor rápido', icon: <Rocket className="h-5 w-5 text-blue-600" /> },
             { text: '5 métodos de pago', icon: <CheckCircle className="h-5 w-5 text-blue-600" /> },
@@ -120,7 +118,6 @@ export default function HomePromotional(){
           priceSuffix: '/ mes',
           features: [
             { text: 'Rifas ilimitadas', icon: <Award className="h-5 w-5 text-blue-500" /> },
-            { text: '3 Plantillas de diseño', icon: <Palette className="h-5 w-5 text-blue-500" /> },
             { text: 'Hasta 10 trabajadores', icon: <Users className="h-5 w-5 text-blue-500" /> },
             { text: 'Servidor ultra rápido', icon: <Rocket className="h-5 w-5 text-blue-500" /> },
             { text: '15 métodos de pago', icon: <CheckCircle className="h-5 w-5 text-blue-500" /> },
