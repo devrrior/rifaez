@@ -35,6 +35,20 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+// Redirige www.<CANONICAL_HOST> -> <CANONICAL_HOST> (dominio oficial sin www).
+// Se activa solo si CANONICAL_HOST esta definido, y solo afecta al www de ese
+// dominio: los dominios personalizados de los clientes no se tocan.
+app.use((req, res, next) => {
+  const canonicalHost = process.env.CANONICAL_HOST;
+  if (canonicalHost) {
+    const host = req.headers.host?.split(':')[0].toLowerCase();
+    if (host === `www.${canonicalHost}`) {
+      return res.redirect(301, `https://${canonicalHost}${req.originalUrl}`);
+    }
+  }
+  next();
+});
+
 app.use("/stripe/webhook", Webhook)
   app.use(express.static(path.join(__dirname, '../client/dist')))
 
