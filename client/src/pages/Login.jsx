@@ -146,7 +146,16 @@ const LoginPage = () => {
         if (response.authResponse) {
           completeFacebookLogin(response.authResponse.accessToken);
         } else {
-          console.warn('User cancelled login or did not authorize');
+          // Algunos navegadores (proteccion de cookies de terceros) no entregan
+          // el authResponse en el callback aunque el usuario SI haya aceptado:
+          // se reconsulta el estado real antes de darlo por cancelado.
+          window.FB.getLoginStatus((status) => {
+            if (status.status === 'connected') {
+              completeFacebookLogin(status.authResponse.accessToken);
+            } else {
+              console.warn('User cancelled login or did not authorize');
+            }
+          }, true);
         }
       },
       { scope: 'public_profile,email' }
