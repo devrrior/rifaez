@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate} from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Facebook, Mail, Lock, Unlock, AlertCircle, CircleX, Check } from "lucide-react";
@@ -18,6 +20,9 @@ const LoginPage = () => {
   
   const [loginError, setLoginError] = useState(null)
   const [linkAccountData, setLinkAccountData] = useState({})
+  const [linkPassword, setLinkPassword] = useState("")
+  const [linkError, setLinkError] = useState(null)
+  const [fbConfirm, setFbConfirm] = useState(null)
   const [recoveryForm, setRecoveryForm] = useState(null)
   const [wasSubmitted, setWasSubmitted] = useState(false)
   const [isLocked, setLock] = useState(true)
@@ -46,8 +51,14 @@ const LoginPage = () => {
     }
   };
 
-  const funcLinkAccount = () => {
-    linkAccount(linkAccountData.email, linkAccountData.facebookId)
+  const funcLinkAccount = async () => {
+    if (!linkPassword) {
+      return setLinkError("Ingresa tu contraseña para vincular la cuenta.");
+    }
+    const data = await linkAccount(linkAccountData.accessToken, linkPassword);
+    if (data?.status === 401) {
+      setLinkError("Contraseña incorrecta.");
+    }
   }
   const handleRecChange = (e) => {
     setRecoveryEmail(e.target.value)
@@ -80,49 +91,58 @@ const LoginPage = () => {
     }
   }, [recoveryEmail])
 
+  const postFacebookCallback = (payload) => {
+    return fetch(`${import.meta.env.VITE_CURRENT_HOST}/auth/facebook/callback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    }).then(res => res.json());
+  };
+
   const handleFacebookLogin = () => {
     window.FB.login(
       (response) => {
         if (response.authResponse) {
-          console.log('Facebook login response:', response);
-
-          window.FB.api('/me', { fields: 'name,email' }, function(userInfo) {
-
-            // Send to server
-            fetch(`${import.meta.env.VITE_CURRENT_HOST}/auth/facebook/callback`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({
-                accessToken: response.authResponse.accessToken,
-                userID: response.authResponse.userID,
-                name: userInfo.name,
-                email: userInfo.email
-              })
+          const accessToken = response.authResponse.accessToken;
+          // Paso 1: el servidor verifica el token y devuelve el perfil.
+          // La sesion NO se crea todavia: el usuario debe confirmar primero.
+          postFacebookCallback({ accessToken })
+            .then(data => {
+              if (data.status === 200 && data.stage === 'confirm') {
+                setFbConfirm({ accessToken, profile: data.profile });
+                document.getElementById("fb-confirm").showModal();
+              } else if (data.status === 409) {
+                setLinkAccountData({ email: data.email, accessToken });
+                document.getElementById("link-account").showModal();
+              } else {
+                setAppError(true);
+              }
             })
-              .then(res => res.json())
-              .then(data => {
-                console.log('Server response:', data);
-                if(data.status === 200){
-                  setUser(data.user)
-                  return navigate("/raffle-admin")
-                } else if (data.status === 409){
-                  document.getElementById("link-account").showModal();
-                  setLinkAccountData({
-                    email: data.email,
-                    facebookId: data.facebookId,
-                  })
-                } else {
-                  setAppError(true)
-                }
-              });
-          });
+            .catch(() => setAppError(true));
         } else {
           console.warn('User cancelled login or did not authorize');
         }
       },
       { scope: 'public_profile,email' }
     );
+  };
+
+  // Paso 2: solo tras la confirmacion explicita del usuario se crea la sesion.
+  const confirmFacebookLogin = () => {
+    postFacebookCallback({ accessToken: fbConfirm.accessToken, confirm: true })
+      .then(data => {
+        document.getElementById("fb-confirm").close();
+        if (data.status === 200) {
+          setUser(data.user);
+          return navigate("/raffle-admin");
+        }
+        setAppError(true);
+      })
+      .catch(() => {
+        document.getElementById("fb-confirm").close();
+        setAppError(true);
+      });
   };
 
  
@@ -248,6 +268,35 @@ const LoginPage = () => {
                 </span>
               </div>
             </div>
+            <dialog id="fb-confirm" className="w-screen h-screen bg-transparent">
+              <div className="h-full w-full flex items-center justify-center px-8">
+                <div className="max-w-full w-[400px] bg-background p-6 space-y-6 rounded-lg">
+                  <div className="space-y-4">
+                    <h1 className="text-lg">¿Iniciar sesión con Facebook?</h1>
+                    <div className="flex items-center gap-3">
+                      {fbConfirm?.profile?.picture && (
+                        <img src={fbConfirm.profile.picture} alt="" className="w-10 h-10 rounded-full" />
+                      )}
+                      <div className="flex flex-col">
+                        <span>{fbConfirm?.profile?.name}</span>
+                        {fbConfirm?.profile?.email && (
+                          <span className="text-muted-foreground text-sm">{fbConfirm.profile.email}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <footer className="flex gap-3 items-center">
+                    <Button
+                      variant="outline"
+                      onClick={()=>{document.getElementById("fb-confirm").close(); setFbConfirm(null)}}
+                    >Cancelar</Button>
+                    <Button onClick={confirmFacebookLogin}>
+                      Iniciar Sesión
+                    </Button>
+                  </footer>
+                  </div>
+              </div>
+            </dialog>
             <dialog id="link-account" className="w-screen h-screen bg-transparent">
               <div className="h-full w-full flex items-center justify-center px-8">
                 <div className="max-w-full w-[400px] bg-background p-6 space-y-6 rounded-lg">
@@ -256,11 +305,22 @@ const LoginPage = () => {
                     <div className="flex flex-col">
                     <span className="text-muted-foreground">Correo Electronico: {linkAccountData.email}</span>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="link-password">Confirma tu contraseña</Label>
+                      <Input
+                        id="link-password"
+                        type="password"
+                        value={linkPassword}
+                        onChange={(e) => {setLinkPassword(e.target.value); setLinkError(null)}}
+                        placeholder="Contraseña de tu cuenta"
+                      />
+                      {linkError && <p className="text-sm text-red-500">{linkError}</p>}
+                    </div>
                   </div>
                   <footer className="flex gap-3 items-center">
                     <Button
                       variant="outline"
-                      onClick={()=>{document.getElementById("link-account").close()}}
+                      onClick={()=>{document.getElementById("link-account").close(); setLinkPassword(""); setLinkError(null)}}
                     >Cancelar</Button>
                     <Button onClick={funcLinkAccount}>
                       Vincular

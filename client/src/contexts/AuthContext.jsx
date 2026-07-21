@@ -69,15 +69,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const linkAccount =  async (email, fbId) => {
+  const linkAccount = async (accessToken, password) => {
     try {
-      const res = await api.post("/auth/link-account", {email, facebookId: fbId})
+      const res = await api.post("/auth/link-account", { accessToken, password })
       if (res.data.status === 200) {
         setUser(res.data.user);
         navigate('/raffle-admin');
       }
+      return res.data;
     } catch (error) {
       setAppError(error)
+      return { status: 500 };
     }
   }
 

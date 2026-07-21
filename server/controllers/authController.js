@@ -115,50 +115,83 @@ export const login = (req, res, next) => {
   }
 
 
-  export const facebookLogin = async (req, res, next) => {
-    const { accessToken, userID } = req.body;
-  
-    if (!accessToken || !userID) {
-      return res.status(400).json({ error: 'Missing accessToken or userID' });
+  // Verifica un access token de Facebook en el servidor siguiendo la guia oficial de Meta:
+  // debug_token debe confirmar is_valid, que el token pertenece a ESTA app (app_id) y el
+  // perfil se obtiene de Graph API firmando la llamada con appsecret_proof. Nunca se
+  // confia en datos de identidad enviados por el cliente.
+  const verifyFacebookToken = async (accessToken) => {
+    const appAccessToken = `${process.env.FB_CLIENT_ID}|${process.env.FB_CLIENT_SECRET}`;
+    const debugRes = await axios.get('https://graph.facebook.com/debug_token', {
+      params: {
+        input_token: accessToken,
+        access_token: appAccessToken,
+      },
+    });
+
+    const tokenData = debugRes.data.data;
+    if (!tokenData?.is_valid || String(tokenData.app_id) !== String(process.env.FB_CLIENT_ID)) {
+      return null;
     }
-  
+
+    const appsecretProof = crypto
+      .createHmac('sha256', process.env.FB_CLIENT_SECRET)
+      .update(accessToken)
+      .digest('hex');
+
+    const userRes = await axios.get('https://graph.facebook.com/me', {
+      params: {
+        access_token: accessToken,
+        appsecret_proof: appsecretProof,
+        fields: 'id,name,email,picture,link',
+      },
+    });
+
+    if (String(userRes.data.id) !== String(tokenData.user_id)) return null;
+
+    return userRes.data;
+  };
+
+  export const facebookLogin = async (req, res, next) => {
+    const { accessToken, confirm } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Missing accessToken' });
+    }
+
     try {
-      const appAccessToken = `${process.env.FB_CLIENT_ID}|${process.env.FB_CLIENT_SECRET}`;
-      const debugRes = await axios.get(`https://graph.facebook.com/debug_token`, {
-        params: {
-          input_token: accessToken,
-          access_token: appAccessToken,
-        },
-      });
-  
-      const isValid = debugRes.data.data?.is_valid && debugRes.data.data.user_id === userID;
-      if (!isValid) {
+      const fbUser = await verifyFacebookToken(accessToken);
+      if (!fbUser) {
         return res.status(401).json({ error: 'Invalid Facebook token' });
       }
-  
-      const userRes = await axios.get('https://graph.facebook.com/me', {
-        params: {
-          access_token: accessToken,
-          fields: 'id,name,email,picture,link',
-        },
-      });
-  
-      const fbUser = userRes.data;
-  
-      let user = await User.findOne({ facebookId: fbUser.id });
-  
-      if (!user) {
-        user = await User.findOne({ username: fbUser.email });
 
-        if (user) {
+      let user = await User.findOne({ facebookId: fbUser.id });
+
+      if (!user && fbUser.email) {
+        const existing = await User.findOne({ username: fbUser.email });
+        if (existing) {
           return res.json({
             error: 'Email already registered. Please log in with email/password first to connect Facebook.',
-            email: user.username,
-            facebookId: fbUser.id,
-            facebookUrl: fbUser.link,
+            email: existing.username,
             status: 409,
           });
         }
+      }
+
+      // Primer paso: solo se verifica la identidad y se devuelve el perfil para que el
+      // usuario confirme explicitamente. La sesion NO se crea hasta recibir confirm: true.
+      if (confirm !== true) {
+        return res.json({
+          status: 200,
+          stage: 'confirm',
+          profile: {
+            name: fbUser.name,
+            email: fbUser.email || null,
+            picture: fbUser.picture?.data?.url || null,
+          },
+        });
+      }
+
+      if (!user) {
         user = await User.create({
           facebookId: fbUser.id,
           name: fbUser.name,
@@ -166,27 +199,45 @@ export const login = (req, res, next) => {
           profilePicture: fbUser.picture?.data?.url || null,
         });
       }
-  
+
       req.login(user, async (err) => {
         if (err) return next(err);
-  
+
         const clientUser = await setUserForClient(req, user);
         return res.json({ message: 'Login successful!', user: clientUser, status: 200 });
       });
-  
+
     } catch (error) {
       console.error('Facebook login error:', error);
       return res.status(500).json({ error: 'Facebook login failed' });
     }
   };
 
+  // Vincular Facebook a una cuenta existente exige demostrar la propiedad de AMBAS:
+  // un access token valido de Facebook (el facebookId y el email se derivan de Graph API,
+  // nunca del cliente) y la contrasena de la cuenta local a vincular.
   export const linkAccount = async (req, res) => {
-    const {email, facebookId} = req.body
-    const user = await User.findByUsername(email)
-    if (!user) return res.status(404).json({ error: 'User not found' });
-    user.facebookId = facebookId;
+    const { accessToken, password } = req.body;
+    if (!accessToken || !password) {
+      return res.status(400).json({ error: 'Missing accessToken or password', status: 400 });
+    }
+
+    const fbUser = await verifyFacebookToken(accessToken);
+    if (!fbUser?.email) {
+      return res.status(401).json({ error: 'Invalid Facebook token', status: 401 });
+    }
+
+    const user = await User.findByUsername(fbUser.email);
+    if (!user) return res.status(404).json({ error: 'User not found', status: 404 });
+
+    const match = await user.authenticate(password);
+    if (!match.user) {
+      return res.json({ error: 'Contraseña incorrecta', status: 401 });
+    }
+
+    user.facebookId = fbUser.id;
     await user.save();
-    
+
     req.login(user, async (err) => {
       if (err) return res.status(500).json({ error: 'Login failed after linking' });
       const clientUser = await setUserForClient(req, user)
