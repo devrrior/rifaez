@@ -45,7 +45,7 @@ router.post('/facebook/deletion', (req, res) => {
   
     // Generate confirmation code and status URL
     const confirmationCode = 'abc123'; // Should be unique per request
-    const statusUrl = `${process.env.CURRENT_DOMAIN}.com/deletion?id=${confirmationCode}`;
+    const statusUrl = `${process.env.CLIENT_URL}/deletion?id=${confirmationCode}`;
   
     res.json({
       url: statusUrl,

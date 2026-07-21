@@ -342,7 +342,7 @@ export const editRaffle = async (req, res) => {
           } else if (participant.transactionID.toLowerCase() === lowerQuery) {
             found = true;
           } else {
-            const ticketNum = participant.tickets.find(ticket => ticket.toString() === lowerQuery)
+            const ticketNum = participant.tickets.find(ticket => ticket.number?.toString() === lowerQuery)
             if(ticketNum){
               found = true;
             }

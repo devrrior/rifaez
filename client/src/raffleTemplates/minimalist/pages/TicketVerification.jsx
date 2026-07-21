@@ -112,7 +112,7 @@ const TicketVerification = ({test}) => {
                         <p>Boleto(s):</p>
                         <ul className="grow flex justify-center gap-4 flex-wrap">
                             {generationResponse.ticket.tickets.map(ticket => (
-                              <span>{ticket}</span>
+                              <span key={ticket.id}>{ticket.number}</span>
                             ))}
                         </ul>
                     </div>
@@ -227,7 +227,7 @@ const TicketVerification = ({test}) => {
                 </div>
                 <div className="p-3 text-center">
                 {verificationResponse.ticket?.tickets?.map(ticket => (
-                    <span key={ticket}>{ticket},</span>
+                    <span key={ticket.id}>{ticket.number},</span>
                   ))}
                 </div>
                 <div className="p-3 text-center">

@@ -145,7 +145,7 @@ export default function HomePromotional(){
         window.addEventListener('resize', handleResize); // watch window size
         return () => window.removeEventListener('resize', handleResize);
       }, []);
-      const domainText = "rifaez.com"
+      const domainText = "rifaez.fun"
     
       
   

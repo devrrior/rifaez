@@ -120,7 +120,11 @@ app.use(
           "https://api.stripe.com",
           "https://www.facebook.com",
           "https://graph.facebook.com",
-          "https://rifaez.com",
+          // Hosts extra opcionales (separados por coma) por si la API vive en un
+          // dominio distinto al del sitio. Con VITE_CURRENT_HOST vacio no hace falta.
+          ...(process.env.EXTRA_CONNECT_SRC
+            ? process.env.EXTRA_CONNECT_SRC.split(",").map((s) => s.trim()).filter(Boolean)
+            : []),
         ],
         frameSrc: [
           "https://js.stripe.com",

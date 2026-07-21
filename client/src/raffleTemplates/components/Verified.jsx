@@ -7,7 +7,7 @@ export default function VerifiedFooter(){
             </svg>
             <div className="uppercase text-center font-medium">
                 <p className="text-base leading-[8px] sm:text-xl sm:leading-[20px]">Estos sorteos son seguros</p>
-                <a href="https://rifaez.com/verification" className="text-[10px] tracking-[-0.5px] sm:text-xs underline">es una pagina verificada, click aqui para mas detalles</a>
+                <a href="/verification" className="text-[10px] tracking-[-0.5px] sm:text-xs underline">es una pagina verificada, click aqui para mas detalles</a>
             </div>
         </div>
     )
