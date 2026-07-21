@@ -121,7 +121,10 @@ const LoginPage = () => {
           console.warn('User cancelled login or did not authorize');
         }
       },
-      { scope: 'public_profile,email' }
+      // auth_type: 'reauthenticate' obliga a Facebook a pedir confirmacion explicita
+      // del usuario en cada intento, incluso si ya autorizo la app antes. Asi el login
+      // solo se completa despues de que el usuario acepta activamente.
+      { scope: 'public_profile,email', auth_type: 'reauthenticate' }
     );
   };
 
