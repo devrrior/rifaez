@@ -22,6 +22,7 @@ const LoginPage = () => {
   const [linkAccountData, setLinkAccountData] = useState({})
   const [linkPassword, setLinkPassword] = useState("")
   const [linkError, setLinkError] = useState(null)
+  const [fbStatus, setFbStatus] = useState(null)
   const [recoveryForm, setRecoveryForm] = useState(null)
   const [wasSubmitted, setWasSubmitted] = useState(false)
   const [isLocked, setLock] = useState(true)
@@ -115,27 +116,41 @@ const LoginPage = () => {
       .catch(() => setAppError(true));
   };
 
-  // Flujo oficial de Facebook Login: primero se consulta el estado con
-  // getLoginStatus; si el usuario ya autorizo la app y tiene sesion activa,
-  // se inicia sesion directo sin abrir ninguna ventana. El dialogo (FB.login)
-  // solo aparece la primera vez o si el usuario revoco el permiso.
-  const handleFacebookLogin = () => {
-    window.FB.getLoginStatus((statusResponse) => {
-      if (statusResponse.status === 'connected') {
-        completeFacebookLogin(statusResponse.authResponse.accessToken);
-      } else {
-        window.FB.login(
-          (response) => {
-            if (response.authResponse) {
-              completeFacebookLogin(response.authResponse.accessToken);
-            } else {
-              console.warn('User cancelled login or did not authorize');
-            }
-          },
-          { scope: 'public_profile,email' }
-        );
+  // Paso 1 del flujo oficial: consultar el estado de login AL CARGAR la pagina.
+  // No puede consultarse dentro del clic: FB.login debe ejecutarse sincronamente
+  // en el gesto del usuario o el navegador bloquea la ventana emergente (y el SDK
+  // reporta "user cancelled" sin que el usuario haya hecho nada).
+  useEffect(() => {
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts += 1;
+      if (window.FB) {
+        clearInterval(timer);
+        window.FB.getLoginStatus((response) => setFbStatus(response), true);
+      } else if (attempts > 20) {
+        clearInterval(timer);
       }
-    }, true);
+    }, 500);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Si ya esta autorizado (estado consultado al cargar), entra directo sin ventana.
+  // Si no, FB.login se llama sincronamente dentro del clic para que el popup no se bloquee.
+  const handleFacebookLogin = () => {
+    if (fbStatus?.status === 'connected') {
+      completeFacebookLogin(fbStatus.authResponse.accessToken);
+      return;
+    }
+    window.FB.login(
+      (response) => {
+        if (response.authResponse) {
+          completeFacebookLogin(response.authResponse.accessToken);
+        } else {
+          console.warn('User cancelled login or did not authorize');
+        }
+      },
+      { scope: 'public_profile,email' }
+    );
   };
 
  
