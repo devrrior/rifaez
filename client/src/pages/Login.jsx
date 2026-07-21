@@ -99,32 +99,43 @@ const LoginPage = () => {
     }).then(res => res.json());
   };
 
-  // Flujo estandar de Facebook Login (el que usan los sitios grandes): el dialogo
-  // de Facebook es el paso de consentimiento; al aceptar, la sesion se crea directo.
-  const handleFacebookLogin = () => {
-    window.FB.login(
-      (response) => {
-        if (response.authResponse) {
-          const accessToken = response.authResponse.accessToken;
-          postFacebookCallback({ accessToken })
-            .then(data => {
-              if (data.status === 200) {
-                setUser(data.user);
-                return navigate("/raffle-admin");
-              } else if (data.status === 409) {
-                setLinkAccountData({ email: data.email, accessToken });
-                document.getElementById("link-account").showModal();
-              } else {
-                setAppError(true);
-              }
-            })
-            .catch(() => setAppError(true));
+  const completeFacebookLogin = (accessToken) => {
+    postFacebookCallback({ accessToken })
+      .then(data => {
+        if (data.status === 200) {
+          setUser(data.user);
+          return navigate("/raffle-admin");
+        } else if (data.status === 409) {
+          setLinkAccountData({ email: data.email, accessToken });
+          document.getElementById("link-account").showModal();
         } else {
-          console.warn('User cancelled login or did not authorize');
+          setAppError(true);
         }
-      },
-      { scope: 'public_profile,email' }
-    );
+      })
+      .catch(() => setAppError(true));
+  };
+
+  // Flujo oficial de Facebook Login: primero se consulta el estado con
+  // getLoginStatus; si el usuario ya autorizo la app y tiene sesion activa,
+  // se inicia sesion directo sin abrir ninguna ventana. El dialogo (FB.login)
+  // solo aparece la primera vez o si el usuario revoco el permiso.
+  const handleFacebookLogin = () => {
+    window.FB.getLoginStatus((statusResponse) => {
+      if (statusResponse.status === 'connected') {
+        completeFacebookLogin(statusResponse.authResponse.accessToken);
+      } else {
+        window.FB.login(
+          (response) => {
+            if (response.authResponse) {
+              completeFacebookLogin(response.authResponse.accessToken);
+            } else {
+              console.warn('User cancelled login or did not authorize');
+            }
+          },
+          { scope: 'public_profile,email' }
+        );
+      }
+    }, true);
   };
 
  
