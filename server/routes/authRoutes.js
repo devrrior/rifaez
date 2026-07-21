@@ -1,4 +1,4 @@
-import { register, deleteUser, login, facebookLogin, recoverPass, verifyPassToken, changeRecoverPass, linkAccount, logout, save, checkPass, changePass, findUser, addWorker, removeWorker, addPaymentMethod, removePaymentMethod} from '../controllers/authController.js'
+import { register, deleteUser, login, facebookRedirect, facebookCallback, recoverPass, verifyPassToken, changeRecoverPass, linkAccount, logout, save, checkPass, changePass, findUser, addWorker, removeWorker, addPaymentMethod, removePaymentMethod} from '../controllers/authController.js'
 import express from 'express';
 import isAuthenticated from '../middleware/isAuthenticated.js';
 import passport from 'passport';
@@ -33,7 +33,8 @@ router.post('/change_password', isAuthenticated, isWorker, catchAsync(changePass
 // });
 
 // Facebook
-router.post('/facebook/callback', catchAsync(facebookLogin));
+router.get('/facebook', facebookRedirect);
+router.get('/facebook/callback', catchAsync(facebookCallback));
 router.post('/facebook/deletion', (req, res) => {
     // const signedRequest = req.body.signed_request;
     // const data = parseSignedRequest(signedRequest);

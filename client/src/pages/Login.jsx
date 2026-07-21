@@ -22,7 +22,6 @@ const LoginPage = () => {
   const [linkAccountData, setLinkAccountData] = useState({})
   const [linkPassword, setLinkPassword] = useState("")
   const [linkError, setLinkError] = useState(null)
-  const [fbStatus, setFbStatus] = useState(null)
   const [recoveryForm, setRecoveryForm] = useState(null)
   const [wasSubmitted, setWasSubmitted] = useState(false)
   const [isLocked, setLock] = useState(true)
@@ -55,7 +54,7 @@ const LoginPage = () => {
     if (!linkPassword) {
       return setLinkError("Ingresa tu contraseña para vincular la cuenta.");
     }
-    const data = await linkAccount(linkAccountData.accessToken, linkPassword);
+    const data = await linkAccount(linkPassword);
     if (data?.status === 401) {
       setLinkError("Contraseña incorrecta.");
     }
@@ -91,76 +90,28 @@ const LoginPage = () => {
     }
   }, [recoveryEmail])
 
-  const postFacebookCallback = (payload) => {
-    return fetch(`${import.meta.env.VITE_CURRENT_HOST}/auth/facebook/callback`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(payload),
-    }).then(res => res.json());
-  };
-
-  const completeFacebookLogin = (accessToken) => {
-    postFacebookCallback({ accessToken })
-      .then(data => {
-        if (data.status === 200) {
-          setUser(data.user);
-          return navigate("/raffle-admin");
-        } else if (data.status === 409) {
-          setLinkAccountData({ email: data.email, accessToken });
-          document.getElementById("link-account").showModal();
-        } else {
-          setAppError(true);
-        }
-      })
-      .catch(() => setAppError(true));
-  };
-
-  // Paso 1 del flujo oficial: consultar el estado de login AL CARGAR la pagina.
-  // No puede consultarse dentro del clic: FB.login debe ejecutarse sincronamente
-  // en el gesto del usuario o el navegador bloquea la ventana emergente (y el SDK
-  // reporta "user cancelled" sin que el usuario haya hecho nada).
-  useEffect(() => {
-    let attempts = 0;
-    const timer = setInterval(() => {
-      attempts += 1;
-      if (window.FB) {
-        clearInterval(timer);
-        window.FB.getLoginStatus((response) => setFbStatus(response), true);
-      } else if (attempts > 20) {
-        clearInterval(timer);
-      }
-    }, 500);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Si ya esta autorizado (estado consultado al cargar), entra directo sin ventana.
-  // Si no, FB.login se llama sincronamente dentro del clic para que el popup no se bloquee.
+  // Flujo OAuth por redireccion (el de los sitios grandes): el servidor manda a
+  // facebook.com en esta misma pestana y Facebook regresa a /auth/facebook/callback.
+  // Sin popups ni SDK: inmune a bloqueadores y a proteccion de cookies de terceros.
   const handleFacebookLogin = () => {
-    if (fbStatus?.status === 'connected') {
-      completeFacebookLogin(fbStatus.authResponse.accessToken);
-      return;
-    }
-    window.FB.login(
-      (response) => {
-        if (response.authResponse) {
-          completeFacebookLogin(response.authResponse.accessToken);
-        } else {
-          // Algunos navegadores (proteccion de cookies de terceros) no entregan
-          // el authResponse en el callback aunque el usuario SI haya aceptado:
-          // se reconsulta el estado real antes de darlo por cancelado.
-          window.FB.getLoginStatus((status) => {
-            if (status.status === 'connected') {
-              completeFacebookLogin(status.authResponse.accessToken);
-            } else {
-              console.warn('User cancelled login or did not authorize');
-            }
-          }, true);
-        }
-      },
-      { scope: 'public_profile,email' }
-    );
+    window.location.href = "/auth/facebook";
   };
+
+  // Al volver de Facebook, el servidor comunica el resultado por query params.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const linkEmail = params.get("link_account");
+    const fbError = params.get("fb_error");
+    if (linkEmail) {
+      setLinkAccountData({ email: linkEmail });
+      document.getElementById("link-account")?.showModal();
+    } else if (fbError && fbError !== "cancelled") {
+      setLoginError("No se pudo iniciar sesión con Facebook. Intenta de nuevo.");
+    }
+    if (linkEmail || fbError) {
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
 
  
 

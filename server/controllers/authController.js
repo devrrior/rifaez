@@ -151,29 +151,55 @@ export const login = (req, res, next) => {
     return userRes.data;
   };
 
-  export const facebookLogin = async (req, res, next) => {
-    const { accessToken } = req.body;
+  // Flujo OAuth por redireccion ("code flow", el recomendado por Meta y el que usan
+  // los sitios grandes): no depende de popups ni de cookies de terceros, funciona en
+  // todos los navegadores. El parametro state (guardado en sesion) protege contra CSRF.
+  const fbRedirectUri = (req) => `${req.protocol}://${req.get('host')}/auth/facebook/callback`;
 
-    if (!accessToken) {
-      return res.status(400).json({ error: 'Missing accessToken' });
+  export const facebookRedirect = (req, res) => {
+    const state = crypto.randomBytes(16).toString('hex');
+    req.session.fbOAuthState = state;
+    const params = new URLSearchParams({
+      client_id: process.env.FB_CLIENT_ID,
+      redirect_uri: fbRedirectUri(req),
+      state,
+      scope: 'public_profile,email',
+    });
+    res.redirect(`https://www.facebook.com/v19.0/dialog/oauth?${params}`);
+  };
+
+  export const facebookCallback = async (req, res) => {
+    const { code, state, error } = req.query;
+    const storedState = req.session.fbOAuthState;
+    delete req.session.fbOAuthState;
+
+    if (error || !code || !state || !storedState || state !== storedState) {
+      return res.redirect('/login?fb_error=cancelled');
     }
 
     try {
-      const fbUser = await verifyFacebookToken(accessToken);
-      if (!fbUser) {
-        return res.status(401).json({ error: 'Invalid Facebook token' });
-      }
+      // Intercambio del code por un token: servidor a servidor, con el App Secret.
+      const tokenRes = await axios.get('https://graph.facebook.com/v19.0/oauth/access_token', {
+        params: {
+          client_id: process.env.FB_CLIENT_ID,
+          client_secret: process.env.FB_CLIENT_SECRET,
+          redirect_uri: fbRedirectUri(req),
+          code,
+        },
+      });
+
+      const fbUser = await verifyFacebookToken(tokenRes.data.access_token);
+      if (!fbUser) return res.redirect('/login?fb_error=invalid');
 
       let user = await User.findOne({ facebookId: fbUser.id });
 
       if (!user && fbUser.email) {
         const existing = await User.findOne({ username: fbUser.email });
         if (existing) {
-          return res.json({
-            error: 'Email already registered. Please log in with email/password first to connect Facebook.',
-            email: existing.username,
-            status: 409,
-          });
+          // Cuenta local con ese correo: se deja pendiente la vinculacion en la
+          // sesion (el cliente solo aporta la contrasena, nunca la identidad).
+          req.session.pendingFacebookLink = { facebookId: fbUser.id, email: existing.username };
+          return res.redirect(`/login?link_account=${encodeURIComponent(existing.username)}`);
         }
       }
 
@@ -186,34 +212,27 @@ export const login = (req, res, next) => {
         });
       }
 
-      req.login(user, async (err) => {
-        if (err) return next(err);
-
-        const clientUser = await setUserForClient(req, user);
-        return res.json({ message: 'Login successful!', user: clientUser, status: 200 });
+      req.login(user, (err) => {
+        if (err) return res.redirect('/login?fb_error=server');
+        return res.redirect('/raffle-admin');
       });
-
-    } catch (error) {
-      console.error('Facebook login error:', error);
-      return res.status(500).json({ error: 'Facebook login failed' });
+    } catch (err) {
+      console.error('Facebook callback error:', err.response?.data || err);
+      return res.redirect('/login?fb_error=server');
     }
   };
 
   // Vincular Facebook a una cuenta existente exige demostrar la propiedad de AMBAS:
-  // un access token valido de Facebook (el facebookId y el email se derivan de Graph API,
+  // la identidad de Facebook viene de la sesion (verificada en el callback OAuth,
   // nunca del cliente) y la contrasena de la cuenta local a vincular.
   export const linkAccount = async (req, res) => {
-    const { accessToken, password } = req.body;
-    if (!accessToken || !password) {
-      return res.status(400).json({ error: 'Missing accessToken or password', status: 400 });
+    const { password } = req.body;
+    const pending = req.session.pendingFacebookLink;
+    if (!pending || !password) {
+      return res.status(400).json({ error: 'No pending Facebook link', status: 400 });
     }
 
-    const fbUser = await verifyFacebookToken(accessToken);
-    if (!fbUser?.email) {
-      return res.status(401).json({ error: 'Invalid Facebook token', status: 401 });
-    }
-
-    const user = await User.findByUsername(fbUser.email);
+    const user = await User.findByUsername(pending.email);
     if (!user) return res.status(404).json({ error: 'User not found', status: 404 });
 
     const match = await user.authenticate(password);
@@ -221,7 +240,8 @@ export const login = (req, res, next) => {
       return res.json({ error: 'Contraseña incorrecta', status: 401 });
     }
 
-    user.facebookId = fbUser.id;
+    delete req.session.pendingFacebookLink;
+    user.facebookId = pending.facebookId;
     await user.save();
 
     req.login(user, async (err) => {

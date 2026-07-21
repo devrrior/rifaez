@@ -69,9 +69,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const linkAccount = async (accessToken, password) => {
+  const linkAccount = async (password) => {
     try {
-      const res = await api.post("/auth/link-account", { accessToken, password })
+      const res = await api.post("/auth/link-account", { password })
       if (res.data.status === 200) {
         setUser(res.data.user);
         navigate('/raffle-admin');
