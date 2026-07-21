@@ -105,6 +105,7 @@ app.use(
           "'self'",
           "https://api.stripe.com",
           "https://www.facebook.com",
+          "https://graph.facebook.com",
           "https://rifaez.com",
         ],
         frameSrc: [
