@@ -22,7 +22,6 @@ const LoginPage = () => {
   const [linkAccountData, setLinkAccountData] = useState({})
   const [linkPassword, setLinkPassword] = useState("")
   const [linkError, setLinkError] = useState(null)
-  const [fbConfirm, setFbConfirm] = useState(null)
   const [recoveryForm, setRecoveryForm] = useState(null)
   const [wasSubmitted, setWasSubmitted] = useState(false)
   const [isLocked, setLock] = useState(true)
@@ -100,18 +99,18 @@ const LoginPage = () => {
     }).then(res => res.json());
   };
 
+  // Flujo estandar de Facebook Login (el que usan los sitios grandes): el dialogo
+  // de Facebook es el paso de consentimiento; al aceptar, la sesion se crea directo.
   const handleFacebookLogin = () => {
     window.FB.login(
       (response) => {
         if (response.authResponse) {
           const accessToken = response.authResponse.accessToken;
-          // Paso 1: el servidor verifica el token y devuelve el perfil.
-          // La sesion NO se crea todavia: el usuario debe confirmar primero.
           postFacebookCallback({ accessToken })
             .then(data => {
-              if (data.status === 200 && data.stage === 'confirm') {
-                setFbConfirm({ accessToken, profile: data.profile });
-                document.getElementById("fb-confirm").showModal();
+              if (data.status === 200) {
+                setUser(data.user);
+                return navigate("/raffle-admin");
               } else if (data.status === 409) {
                 setLinkAccountData({ email: data.email, accessToken });
                 document.getElementById("link-account").showModal();
@@ -126,23 +125,6 @@ const LoginPage = () => {
       },
       { scope: 'public_profile,email' }
     );
-  };
-
-  // Paso 2: solo tras la confirmacion explicita del usuario se crea la sesion.
-  const confirmFacebookLogin = () => {
-    postFacebookCallback({ accessToken: fbConfirm.accessToken, confirm: true })
-      .then(data => {
-        document.getElementById("fb-confirm").close();
-        if (data.status === 200) {
-          setUser(data.user);
-          return navigate("/raffle-admin");
-        }
-        setAppError(true);
-      })
-      .catch(() => {
-        document.getElementById("fb-confirm").close();
-        setAppError(true);
-      });
   };
 
  
@@ -268,35 +250,6 @@ const LoginPage = () => {
                 </span>
               </div>
             </div>
-            <dialog id="fb-confirm" className="w-screen h-screen bg-transparent">
-              <div className="h-full w-full flex items-center justify-center px-8">
-                <div className="max-w-full w-[400px] bg-background p-6 space-y-6 rounded-lg">
-                  <div className="space-y-4">
-                    <h1 className="text-lg">¿Iniciar sesión con Facebook?</h1>
-                    <div className="flex items-center gap-3">
-                      {fbConfirm?.profile?.picture && (
-                        <img src={fbConfirm.profile.picture} alt="" className="w-10 h-10 rounded-full" />
-                      )}
-                      <div className="flex flex-col">
-                        <span>{fbConfirm?.profile?.name}</span>
-                        {fbConfirm?.profile?.email && (
-                          <span className="text-muted-foreground text-sm">{fbConfirm.profile.email}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <footer className="flex gap-3 items-center">
-                    <Button
-                      variant="outline"
-                      onClick={()=>{document.getElementById("fb-confirm").close(); setFbConfirm(null)}}
-                    >Cancelar</Button>
-                    <Button onClick={confirmFacebookLogin}>
-                      Iniciar Sesión
-                    </Button>
-                  </footer>
-                  </div>
-              </div>
-            </dialog>
             <dialog id="link-account" className="w-screen h-screen bg-transparent">
               <div className="h-full w-full flex items-center justify-center px-8">
                 <div className="max-w-full w-[400px] bg-background p-6 space-y-6 rounded-lg">

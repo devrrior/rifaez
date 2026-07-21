@@ -152,7 +152,7 @@ export const login = (req, res, next) => {
   };
 
   export const facebookLogin = async (req, res, next) => {
-    const { accessToken, confirm } = req.body;
+    const { accessToken } = req.body;
 
     if (!accessToken) {
       return res.status(400).json({ error: 'Missing accessToken' });
@@ -175,20 +175,6 @@ export const login = (req, res, next) => {
             status: 409,
           });
         }
-      }
-
-      // Primer paso: solo se verifica la identidad y se devuelve el perfil para que el
-      // usuario confirme explicitamente. La sesion NO se crea hasta recibir confirm: true.
-      if (confirm !== true) {
-        return res.json({
-          status: 200,
-          stage: 'confirm',
-          profile: {
-            name: fbUser.name,
-            email: fbUser.email || null,
-            picture: fbUser.picture?.data?.url || null,
-          },
-        });
       }
 
       if (!user) {
