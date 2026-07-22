@@ -332,27 +332,32 @@ export const editRaffle = async (req, res) => {
 
 
   const searchTicket = (participants, query) => {
-    const lowerQuery = query.toLowerCase()
+    // El comprador puede verificar el estado de su boleto por: numero de boleto,
+    // ID de transaccion, numero de telefono o nombre.
+    const lowerQuery = query.trim().toLowerCase()       // texto (transaccion / nombre / boleto)
+    const digitsQuery = query.replace(/\D/g, '')        // solo digitos (telefono)
     let ticket = undefined
-    let found = false
+
     participants.forEach(participant => {
-      if(!found){
-          if(participant.phone.toString() === lowerQuery){
-            found = true;
-          } else if (participant.transactionID.toLowerCase() === lowerQuery) {
-            found = true;
-          } else {
-            const ticketNum = participant.tickets.find(ticket => ticket.number?.toString() === lowerQuery)
-            if(ticketNum){
-              found = true;
-            }
-          }
-        if(found){
-          ticket = participant
-        }
+      if (ticket) return
+
+      const phoneDigits = participant.phone?.number?.toString().replace(/\D/g, '') || ''
+      const firstName = participant.first_name?.trim().toLowerCase() || ''
+      const lastName = participant.last_name?.trim().toLowerCase() || ''
+      const fullName = `${firstName} ${lastName}`.trim()
+      const transactionID = participant.transactionID?.toString().toLowerCase() || ''
+
+      const matchesPhone = digitsQuery.length > 0 && phoneDigits === digitsQuery
+      const matchesTransaction = transactionID === lowerQuery
+      const matchesName = lowerQuery.length > 0 &&
+        (firstName === lowerQuery || lastName === lowerQuery || fullName === lowerQuery)
+      const matchesTicket = participant.tickets.some(t => t.number?.toString() === lowerQuery)
+
+      if (matchesPhone || matchesTransaction || matchesName || matchesTicket) {
+        ticket = participant
       }
-      
-    });
+    })
+
     return ticket
   }
 

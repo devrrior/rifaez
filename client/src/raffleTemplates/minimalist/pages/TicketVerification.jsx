@@ -150,7 +150,7 @@ const TicketVerification = ({test}) => {
                 value={ticketNumber}
                 onChange={(e) => setTicketNumber(e.target.value)}
                 className="w-full bg-transparent px-4 py-2 rounded text-colorRaffle border-2 border-borderRaffle text-lg"
-                placeholder="Escribe Boleto, Folio ó Celular"
+                placeholder="Escribe Boleto, Folio, Celular ó Nombre"
               />
               <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>

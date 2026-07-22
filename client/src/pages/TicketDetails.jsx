@@ -68,7 +68,7 @@ const TicketDetails = () => {
         amount: newTicket.amount,
         time: time.split('.')[0],
         state: newTicket.state,
-        phone: setPhoneFormat(newTicket.phone),
+        phone: setPhoneFormat(newTicket.phone?.number),
         notes: []
       })
     } else {
